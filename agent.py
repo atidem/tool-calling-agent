@@ -36,11 +36,13 @@ def toolUsage(usrPrompt,respond,N=10, onTool=None):
 
         messages.append({"role":"assistant","content":respond.content})
 
+        ### scans blocks which have to use tools..
         for block in respond.content:
             if block.type != "tool_use":
                 continue
             func = TOOL_FUNCTIONS.get(block.name)
             if func is not None:
+                ## call the function from tool pool.
                 res = func(**block.input)
                 isErr = res.startswith("Error")
             else:
@@ -51,7 +53,8 @@ def toolUsage(usrPrompt,respond,N=10, onTool=None):
                 "content": res,
                 "is_error": isErr,
             })
-
+            
+            ## visualize to call a tool on streamlit
             if onTool:
                  onTool(block.name, block.input, res)
 
@@ -69,8 +72,10 @@ def toolUsage(usrPrompt,respond,N=10, onTool=None):
         
     return respond
 ########################################################
+## Streamlit 
 
 def show_tool(name, tool_input, result):
+    """visualize using a tool"""
     st.code(f"tool: {name}\ninput: {tool_input}\nresult: {result}")
 
 st.header("Agent Reaharsal")
@@ -80,16 +85,20 @@ prmpt = st.text_input("So..?")
 btnSend = st.button("Send")
 
 if btnSend:
+    ## first contact with agent 
     respond = generateResponse([{"role":"user","content":prmpt}])
 
+    ## take a look to blocks which have tool usage info 
     for block in respond.content:
         if block.type=="tool_use":
             with st.status("Agent is working...", expanded=True) as status:
+                ## go and use your tool dude..
                 respond = toolUsage(prmpt, respond, onTool=show_tool)
                 status.update(label="🟢 The job is completed by The Agent :) 🟢", state="complete")
 
     st.warning(f"stop reason:{respond.stop_reason}")
 
+    ## Final message is writed
     finalMessage = next(block for block in respond.content if block.type == "text")
     st.markdown(finalMessage.text)
 
