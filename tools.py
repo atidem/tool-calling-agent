@@ -1,4 +1,5 @@
 import numexpr
+from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -23,6 +24,26 @@ def getTime(timezone):
             f"Error: unknown timezone '{timezone}'. "
             "Use IANA format like Asia/Dubai or Europe/Istanbul."
         )
+
+ALLOWED_DIR = (Path(__file__).resolve().parent/"data").resolve()
+MAX_BYTES = 50_000
+def readFile(path):
+    target = (ALLOWED_DIR / path).resolve()
+
+    if not target.is_relative_to(ALLOWED_DIR):
+        return "Error: access denied. Only files inside the data folder can be read."
+    
+    if not target.is_file():
+        return f"Error: file '{path}' not found in the data folder."
+
+    if target.stat().st_size > MAX_BYTES:
+        return f"Error: file '{path}' is too large (limit {MAX_BYTES} bytes)."
+
+    try:
+        return target.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return f"Error: file '{path}' is not a readable text file."
+    
 
 ####################################################
 ## TOOL DEFINITIONS
@@ -61,8 +82,26 @@ GET_TIME_TOOL = {"name": "getTime",
                                 },
                 }
 
+READ_FILE_TOOL = {"name": "readFile",
+                    "description": (
+                    "Reads a text file from the local data folder and returns its content. "
+                    "Use this tool when the user asks about the content of a file. "
+                    "Only files inside the data folder can be read, "
+                    "and only text files are supported."),
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                        "type": "string",
+                        "description": "Path of the file relative to the data folder. Example: notes.txt",
+                                        }
+                                    },
+                    "required": ["path"],
+                                },
+                }
+
 ####################################################
 ## REGISTRIES TO AGENT
 
-TOOLS = [CALCULATOR_TOOL, GET_TIME_TOOL]
-TOOL_FUNCTIONS = {"calculator":calculator,"getTime":getTime}
+TOOLS = [CALCULATOR_TOOL, GET_TIME_TOOL,READ_FILE_TOOL]
+TOOL_FUNCTIONS = {"calculator":calculator,"getTime":getTime,"readFile":readFile}
