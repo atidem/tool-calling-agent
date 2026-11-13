@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 import streamlit as st
 from tools import TOOLS,TOOL_FUNCTIONS
+from datetime import datetime
+
 
 #######################################################
 load_dotenv()
@@ -19,9 +21,20 @@ def generateResponse(messages):
         model="claude-haiku-4-5",
         max_tokens=512,
         tools=TOOLS,
-        messages=messages
+        messages=messages,
+        system = build_system_prompt()
     )
     return response
+
+def build_system_prompt():
+    today = datetime.now().strftime("%A, %Y-%m-%d")
+    return (
+        f"Today's date is {today}. "
+        "Your own knowledge may be outdated. For current events or recent facts, "
+        "rely on webSearch results. If the search fails or returns nothing useful, "
+        "tell the user you could not find up-to-date information instead of "
+        "answering from memory."
+    )
 
 def toolUsage(usrPrompt,respond,N=10, onTool=None):
     """agent helper to use tools agents have"""

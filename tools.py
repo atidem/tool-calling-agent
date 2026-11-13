@@ -2,6 +2,16 @@ import numexpr
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from ddgs import DDGS
+
+
+###################################################
+## CONS
+ALLOWED_DIR = (Path(__file__).resolve().parent/"data").resolve()
+MAX_BYTES = 50_000
+MAX_RESULTS = 5
+MAX_CHAR = 450
+
 
 ###################################################
 ## FUNCTIONS
@@ -25,8 +35,6 @@ def getTime(timezone):
             "Use IANA format like Asia/Dubai or Europe/Istanbul."
         )
 
-ALLOWED_DIR = (Path(__file__).resolve().parent/"data").resolve()
-MAX_BYTES = 50_000
 def readFile(path):
     target = (ALLOWED_DIR / path).resolve()
 
@@ -44,6 +52,31 @@ def readFile(path):
     except UnicodeDecodeError:
         return f"Error: file '{path}' is not a readable text file."
     
+def webSearch(query,maxResults=5):
+    maxResults = max(1, min(maxResults, 5))
+
+    try: 
+        results = DDGS().text(query,max_results = maxResults)
+    except Exception as e:
+        return (f"Error: search failed ({e}). Try a different query, or tell the user "
+            "that up-to-date information could not be found. "
+            "Do not answer from memory about recent events.")
+    
+    if not results:
+        return f"No results found for '{query}'"
+
+    blocks = []
+    for i,r in enumerate(results,start=1):
+        title = r.get("title","")
+        url = r.get("href","")
+        body = r.get("body","") 
+        if len(body)>MAX_CHAR:
+            body = body[:MAX_CHAR]+ "..."
+        
+        blocks.append(f"[{i}]  {title}\n{url}\n{body}")
+    
+    return "\n\n".join(blocks)
+
 
 ####################################################
 ## TOOL DEFINITIONS
@@ -100,8 +133,34 @@ READ_FILE_TOOL = {"name": "readFile",
                                 },
                 }
 
+WEBSEARCH_TOOL = {"name":"webSearch",
+                    "description":(
+                    "When you need to research something on Internet,"
+                    "use this tool to get more and updated knowledge. Searches the web and returns the top results,"
+                    " each with a title, URL and a short snippet. Use this tool for current events,"
+                    " recent facts, or anything that may have changed after your training data."
+                    "Always cite the sources you used with their numbers and URLs in your answer. If the sources disagree, mention it."),
+                "input_schema":{
+                    "type":"object",
+                    "properties":{
+                        "query":{
+                            "type":"string",
+                            "description": "Short search query with keywords. Example: cost of living US 2026"
+                        },
+                        "maxResults": {
+                            "type": "integer",
+                            "description": "Number of results to return, between 1 and 5. Default: 5.",
+                            "minimum": 1,
+                            "maximum": 5,
+                        },
+                    },
+                "required":["query"],
+                            },
+                }
+
+
 ####################################################
 ## REGISTRIES TO AGENT
 
-TOOLS = [CALCULATOR_TOOL, GET_TIME_TOOL,READ_FILE_TOOL]
-TOOL_FUNCTIONS = {"calculator":calculator,"getTime":getTime,"readFile":readFile}
+TOOLS = [CALCULATOR_TOOL, GET_TIME_TOOL,READ_FILE_TOOL,WEBSEARCH_TOOL]
+TOOL_FUNCTIONS = {"calculator":calculator,"getTime":getTime,"readFile":readFile,"webSearch":webSearch}
