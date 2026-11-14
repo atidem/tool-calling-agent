@@ -99,21 +99,22 @@ CALCULATOR_TOOL = {"name": "calculator",
                                 },
                 }
 GET_TIME_TOOL = {"name": "getTime",
+                "description": (
+                "Returns the current date and time in a given timezone. "
+                "Use this tool whenever the user asks about the current time or date in a city or region."),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "timezone": {
+                    "type": "string",
                     "description": (
-                    "Returns the current date and time in a given timezone. Use this tool whenever the user asks about the current time"
-                     " or date in a city or region."),
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "timezone": {
-                        "type": "string",
-                        "description": "IANA timezone name in Region/City format. Convert city names to this format. "
-                        "Examples: Asia/Dubai, Europe/Istanbul, America/New_York",
-                                        }
-                                    },
-                    "required": ["timezone"],
-                                },
-                }
+                        "IANA timezone name in Region/City format. Convert city names to this format. "
+                        "Examples: Asia/Dubai, Europe/Istanbul, America/New_York"),
+                                }
+                            },
+                "required": ["timezone"],
+                        },
+                }                  
 
 READ_FILE_TOOL = {"name": "readFile",
                     "description": (
@@ -138,8 +139,7 @@ WEBSEARCH_TOOL = {"name":"webSearch",
                     "When you need to research something on Internet,"
                     "use this tool to get more and updated knowledge. Searches the web and returns the top results,"
                     " each with a title, URL and a short snippet. Use this tool for current events,"
-                    " recent facts, or anything that may have changed after your training data."
-                    "Always cite the sources you used with their numbers and URLs in your answer. If the sources disagree, mention it."),
+                    " recent facts, or anything that may have changed after your training data."),
                 "input_schema":{
                     "type":"object",
                     "properties":{
