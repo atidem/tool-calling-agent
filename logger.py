@@ -7,6 +7,7 @@ LOG_DIR = Path(__file__).resolve().parent / "logs"
 LOG_FILE = LOG_DIR / "agent_runs.jsonl"
 PRICES = {
     "claude-haiku-4-5": {"input": 1.0, "output": 5.0},
+    "claude-haiku-5-5": {"input": 0.10, "output": 0.50}
 }
 #######################################################
 
